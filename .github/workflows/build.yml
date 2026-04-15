@@ -50,6 +50,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y patchelf
 
+      - name: Install Windows dependencies
+        if: runner.os == 'Windows'
+        run: |
+          choco install dependencywalker
+
       - name: Install macOS dependencies
         if: runner.os == 'macOS'
         run: |

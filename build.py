@@ -29,7 +29,6 @@ def build_target(entry: Path, project_root: Path, build_dir: Path, dist_dir: Pat
         ])
     cmd.extend([
         "--enable-plugin=pyside6",
-        "--include-qt-plugins=styles,imageformats,platforms",
         "--static-libpython=no",
         f"--output-dir={sub_build}",
         f"--output-filename={name}",

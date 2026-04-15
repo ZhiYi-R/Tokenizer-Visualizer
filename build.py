@@ -56,7 +56,6 @@ def build_target(entry: Path, project_root: Path, build_dir: Path, dist_dir: Pat
             cmd.append(f"--linux-icon={icon_path}")
 
     env = dict(os.environ)
-    env.setdefault("LDFLAGS", "-L/usr/lib/gcc/x86_64-redhat-linux/15")
 
     # Help Nuitka locate PySide6 plugins on all platforms
     try:

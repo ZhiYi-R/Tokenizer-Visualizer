@@ -29,7 +29,7 @@ def build_target(entry: Path, project_root: Path, build_dir: Path, dist_dir: Pat
         ])
     cmd.extend([
         "--enable-plugin=pyside6",
-        "--include-qt-plugins=platformthemes,imageformats",
+        "--include-qt-plugins=styles,imageformats,platforms",
         "--static-libpython=no",
         f"--output-dir={sub_build}",
         f"--output-filename={name}",
@@ -58,6 +58,15 @@ def build_target(entry: Path, project_root: Path, build_dir: Path, dist_dir: Pat
 
     env = dict(os.environ)
     env.setdefault("LDFLAGS", "-L/usr/lib/gcc/x86_64-redhat-linux/15")
+
+    # Help Nuitka locate PySide6 plugins on all platforms
+    try:
+        import PySide6
+        qt_plugin_path = Path(PySide6.__file__).parent / "plugins"
+        if qt_plugin_path.exists():
+            env.setdefault("QT_PLUGIN_PATH", str(qt_plugin_path))
+    except Exception:
+        pass
 
     print("\n" + "=" * 60)
     print(f"Building {'onefile' if onefile else 'standalone'} target")

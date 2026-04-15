@@ -1,0 +1,102 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            pkg_dir: tokenizer-visualizer
+            asset_name: tokenizer-visualizer-linux
+            ext: tar.gz
+          - os: windows-latest
+            pkg_dir: tokenizer-visualizer
+            asset_name: tokenizer-visualizer-windows
+            ext: zip
+          - os: macos-13
+            pkg_dir: tokenizer-visualizer
+            asset_name: tokenizer-visualizer-macos-intel
+            ext: tar.gz
+          - os: macos-14
+            pkg_dir: tokenizer-visualizer
+            asset_name: tokenizer-visualizer-macos-arm64
+            ext: tar.gz
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y patchelf
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install patchelf || true
+
+      - name: Install project dependencies
+        run: uv sync
+
+      - name: Build with Nuitka
+        run: uv run python build.py
+
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd dist
+          mv "${{ matrix.pkg_dir }}" "${{ matrix.asset_name }}"
+          tar czvf "${{ matrix.asset_name }}.${{ matrix.ext }}" "${{ matrix.asset_name }}"
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cd dist
+          Rename-Item -Path "${{ matrix.pkg_dir }}" -NewName "${{ matrix.asset_name }}"
+          Compress-Archive -Path "${{ matrix.asset_name }}" -DestinationPath "${{ matrix.asset_name }}.${{ matrix.ext }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: dist/${{ matrix.asset_name }}.${{ matrix.ext }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

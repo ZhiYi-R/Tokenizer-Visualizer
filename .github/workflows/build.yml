@@ -2,11 +2,11 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     tags:
       - 'v*'
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   build:
@@ -22,11 +22,11 @@ jobs:
             pkg_dir: tokenizer-visualizer
             asset_name: tokenizer-visualizer-windows
             ext: zip
-          - os: macos-13
+          - os: macos-15-intel
             pkg_dir: tokenizer-visualizer
             asset_name: tokenizer-visualizer-macos-intel
             ext: tar.gz
-          - os: macos-14
+          - os: macos-15
             pkg_dir: tokenizer-visualizer
             asset_name: tokenizer-visualizer-macos-arm64
             ext: tar.gz
